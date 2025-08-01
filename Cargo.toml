@@ -1,0 +1,14 @@
+[package]
+name = "ccp"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "ccopy"
+path = "src/ccopy.rs"
+
+[[bin]]
+name = "cpaste"
+path = "src/cpaste.rs"
+
+[dependencies]
