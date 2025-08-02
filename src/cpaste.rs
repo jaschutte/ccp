@@ -1,3 +1,4 @@
+use copy_dir::copy_dir;
 use std::process::exit;
 
 fn main() {
@@ -12,17 +13,28 @@ fn main() {
         Err(error) => {
             eprintln!("Failed to retrieve copied files, error: {error}");
             exit(1);
-        },
+        }
     };
 
     for path in content.lines() {
-        match std::fs::copy(path, &args[1]) {
+        // We love tripple allocating strings!!
+        let basename = path
+            .chars()
+            .rev()
+            .skip_while(|c| *c == '/') // Skip any postfixed '/'
+            .take_while(|c| *c != '/')
+            .collect::<String>()
+            .chars()
+            .rev()
+            .collect::<String>();
+        let target = format!("{}/{}", args[1], basename);
+
+        match copy_dir(path, &target) {
             Ok(_) => (),
             Err(error) => {
                 eprintln!("Failed to copy file {path}, error: {error}");
                 exit(1);
-            },
+            }
         }
     }
 }
-

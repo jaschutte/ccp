@@ -12,3 +12,4 @@ name = "cpaste"
 path = "src/cpaste.rs"
 
 [dependencies]
+copy_dir = "0.1.3"
