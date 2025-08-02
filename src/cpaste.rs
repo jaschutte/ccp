@@ -3,10 +3,17 @@ use std::process::exit;
 
 fn main() {
     let args = std::env::args().collect::<Vec<String>>();
-    if args.len() != 2 {
-        eprintln!("You must provide precisely one argument, the path to copy the files to");
-        exit(1);
-    }
+
+    let arg_target = match args.len() {
+        1 => String::from("."),
+        2 => args[1].clone(),
+        _ => {
+            eprintln!(
+                "You must provide one path to copy the files to (if none given, the current directory will be used)"
+            );
+            exit(1);
+        }
+    };
 
     let content = match std::fs::read_to_string("/tmp/___CCP_COPIED_FILES") {
         Ok(content) => content,
@@ -17,19 +24,28 @@ fn main() {
     };
 
     for path in content.lines() {
-        // We love tripple allocating strings!!
-        let basename = path
-            .chars()
-            .rev()
-            .skip_while(|c| *c == '/') // Skip any postfixed '/'
-            .take_while(|c| *c != '/')
-            .collect::<String>()
-            .chars()
-            .rev()
-            .collect::<String>();
-        let target = format!("{}/{}", args[1], basename);
+        let is_directory = match std::fs::metadata(&arg_target) {
+            Ok(meta) => meta.is_dir(),
+            Err(_) => false,
+        };
 
-        match copy_dir(path, &target) {
+        let target = if is_directory {
+            // We love tripple allocating strings!!
+            let basename = path
+                .chars()
+                .rev()
+                .skip_while(|c| *c == '/') // Skip any postfixed '/'
+                .take_while(|c| *c != '/')
+                .collect::<String>()
+                .chars()
+                .rev()
+                .collect::<String>();
+            &format!("{}/{}", arg_target, basename)
+        } else {
+            &arg_target
+        };
+
+        match copy_dir(path, target) {
             Ok(_) => (),
             Err(error) => {
                 eprintln!("Failed to copy file {path}, error: {error}");
